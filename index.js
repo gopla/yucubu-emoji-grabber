@@ -5,20 +5,22 @@ const link = './link/'
 
 async function downloadImage(url, dir, fileName) {
 	const path = Path.resolve(dir, `${fileName}.png`)
-	const writer = fs.createWriteStream(path)
+	if (!fs.existsSync(path)) {
+		const writer = fs.createWriteStream(path)
 
-	const response = await axios({
-		url,
-		method: 'GET',
-		responseType: 'stream',
-	})
+		const response = await axios({
+			url,
+			method: 'GET',
+			responseType: 'stream',
+		})
 
-	response.data.pipe(writer)
+		response.data.pipe(writer)
 
-	return new Promise((resolve, reject) => {
-		writer.on('finish', resolve)
-		writer.on('error', reject)
-	})
+		return new Promise((resolve, reject) => {
+			writer.on('finish', resolve)
+			writer.on('error', reject)
+		})
+	}
 }
 
 if (!fs.existsSync(link)) {
@@ -29,14 +31,11 @@ if (!fs.existsSync(link)) {
 		const dir = `./images/${dirName}`
 		if (!fs.existsSync(dir)) {
 			fs.mkdirSync(dir)
-			let data = fs.readFileSync(link.concat(file)).toString().split("\r\n")
-			console.log(`begin download Emoji ${dirName}`)
-			let n = 1
-			data.map((e) => {
-				downloadImage(e, dir, n++)
-			})
-		} else {
-			console.log(`Emoji ${dirName} already exist`)
 		}
+		let data = fs.readFileSync(link.concat(file)).toString().replace(/\r\n/g, "\n").split("\n")
+		let n = 1
+		data.map((e) => {
+			downloadImage(e, dir, n++)
+		})
 	})
 }
